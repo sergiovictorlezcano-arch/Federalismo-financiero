@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auge del Crédito Internacional - Visualización Interactiva</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        .timeline-container {
+            max-width: 1200px;
+            width: 100%;
+            position: relative;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            top: 0;
+        }
+
+        .phase {
+            display: flex;
+            gap: 40px;
+            position: relative;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .phase:nth-child(1) { animation-delay: 0.1s; }
+        .phase:nth-child(2) { animation-delay: 0.3s; }
+        .phase:nth-child(3) { animation-delay: 0.5s; }
+        .phase:nth-child(4) { animation-delay: 0.7s; }
+        .phase:nth-child(5) { animation-delay: 0.9s; }
+
+        .phase:nth-child(odd) {
+            flex-direction: row;
+        }
+
+        .phase:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .phase-content {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .phase-content:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .phase-marker {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%) translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 4px solid #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.2em;
+            z-index: 10;
+        }
+
+        .phase-number {
+            font-size: 1.5em;
+        }
+
+        .phase-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+
+        .phase-content:hover .phase-title {
+            color: #764ba2;
+        }
+
+        .phase-description {
+            color: #555;
+            font-size: 1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .expandable-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
+        }
+
+        .section-header:hover {
+            color: #764ba2;
+        }
+
+        .toggle-icon {
+            display: inline-block;
+            margin-right: 8px;
+            transition: transform 0.3s ease;
+            font-size: 1.2em;
+        }
+
+        .toggle-icon.active {
+            transform: rotate(180deg);
+        }
+
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding-left: 20px;
+        }
+
+        .section-content.active {
+            max-height: 500px;
+        }
+
+        .content-item {
+            margin: 8px 0;
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .content-item strong {
+            color: #764ba2;
+        }
+
+        .timeline-year {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        button {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: #667eea;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            background: #667eea;
+            color: white;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .timeline::before {
+                left: 20px;
+            }
+
+            .phase {
+                flex-direction: column !important;
+                gap: 20px;
+            }
+
+            .phase-content {
+                margin-left: 60px;
+            }
+
+            .phase-marker {
+                left: 20px;
+            }
+        }
+
+        footer {
+            margin-top: 50px;
+            color: white;
+            text-align: center;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌍 Auge del Crédito Internacional</h1>
+        <p class="subtitle">Crisis Financiera Argentina - Siglo XIX</p>
+    </header>
+
+    <div class="timeline-container">
+        <div class="timeline">
+            <!-- Phase 1 -->
+            <div class="phase">
+                <div class="phase-content">
+                    <div class="phase-marker">
+                        <span class="phase-number">1</span>
+                    </div>
+                    <span class="timeline-year">1870s - 1880s</span>
+                    <h2 class="phase-title">🏦 Auge del Crédito Internacional</h2>
+                    <p class="phase-description">
+                        Argentina experimenta un período de expansión crediticia sin precedentes. El comercio internacional prospera y los mercados financieros globales ofrecen liquidez abundante.
+                    </p>
+                    
+                    <div class="expandable-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="toggle-icon">▼</span>
+                            <span>Consecuencias</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="content-item">✓ Inversión masiva en infraestructura</div>
+                            <div class="content-item">✓ Construcción ferroviaria acelerada</div>
+                            <div class="content-item">✓ Aumento de exportaciones agrícolas</div>
+                            <div class="content-item">✗ Sobrevalorización de activos</div>
+                            <div class="content-item">✗ Especulación desenfrenada</div>
+                        </div>
+                    </div>
+
+                    <div class="expandable-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="toggle-icon">▼</span>
+                            <span>Actores Involucrados</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="content-item"><strong>Bancos Internacionales:</strong> Baring Brothers, Rothschild</div>
+                            <div class="content-item"><strong>Gobiernos Provinciales:</strong> Emitiendo deuda autonómamente</div>
+                            <div class="content-item"><strong>Empresarios Locales:</strong> Especuladores de tierras y valores</div>
+                            <div class="content-item"><strong>Inversores Extranjeros:</strong> Británicos principalmente</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 2 -->
+            <div class="phase">
+                <div class="phase-content">
+                    <div class="phase-marker">
+                        <span class="phase-number">2</span>
+                    </div>
+                    <span class="timeline-year">1880s</span>
+                    <h2 class="phase-title">🏛️ Federalismo Financiero</h2>
+                    <p class="phase-description">
+                        Las provincias y municipios obtienen autonomía para emitir deuda. Cada provincia crea sus propios bancos garantizados sin coordinación central. Se multiplican las monedas provinciales.
+                    </p>
+                    
+                    <div class="expandable-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="toggle-icon">▼</span>
+                            <span>Consecuencias</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="content-item">⚠️ Falta de control central sobre la emisión monetaria</div>
+                            <div class="content-item">⚠️ Múltiples monedas provinciales en circulación</div>
+                            <div class="content-item">⚠️ Ineficiencia en el comercio intraprovincial</div>
+                            <div class="content-item">📈 Inflación acelerada</div>
+                            <div class="content-item">📉 Deprecación de la moneda</div>
+                        </div>
+                    </div>
+
+                    <div class="expandable-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="toggle-icon">▼</span>
+                            <span>Actores Involucrados</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="content-item"><strong>Gobiernadores Provinciales:</strong> Buscando autonomía fiscal</div>
+                            <div class="content-item"><strong>Bancos Garantizados:</strong> Instituciones sin respaldo de reservas</div>
+                            <div class="content-item"><strong>Comerciantes:</strong> Sufriendo pérdidas por volatilidad cambiaria</div>
+                            <div class="content-item"><strong>Acreedores Provinciales:</strong> Recibiendo monedas depreciadas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 3 -->
+            <div class="phase">
+                <div class="phase-content">
+                    <div class="phase-marker">
+                        <span class="phase-number">3</span>
+                    </div>
+                    <span class="timeline-year">1880s - 1889</span>
+                    <h2 class="phase-title">💰 Especulación y Bancos Garantizados</h2>
+                    <p class="phase-description">
+                        La especulación alcanza su máximo nivel. Los bancos garantizados emiten billetes sin reservas reales. Burbuja de precios de tierras. El sistema financiero se vuelve completamente insostenible.
+                    </p>
+                    
+                    <div class="expandable-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="toggle-icon">▼</span>
+                            <span>Consecuencias</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="content-item">🔴 Emisión sin respaldo de billetes</div>
+                            <div class="content-item">🔴 Burbuja inmobiliaria descontrolada</div>
+                            <div class="content-item">🔴 Precios de tierras triplicados sin justificación</div>
+                            <div class="content-item">🔴 Insolvencia silenciosa de bancos</div>
+                            <div class="content-item">⚡ Sistema financiero al borde del colapso</div>
+                        </div>
+                    </div>
+
+                    <div class="expandable-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="toggle-icon">▼</span>
+                            <span>Actores Involucrados</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="content-item"><strong>Especuladores:</strong> Compradores de tierras por lucro</div>
+                            <div class="content-item"><strong>Bancos Garantizados:</strong> Emitiendo sin supervisión</div>
+                            <div class="content-item"><strong>Magnates de la Tierra:</strong> Controlando mercado inmobiliario</div>
+                            <div class="content-item"><strong>Ahorristas:</strong> Inocentes poseedores de moneda depreciada</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 4 -->
+            <div class="phase">
+                <div class="phase-content">
+                    <div class="phase-marker">
+                        <span class="phase-number">4</span>
+                    </div>
+                    <span class="timeline-year">1890</span>
+                    <h2 class="phase-title">💥 Pánico Baring - Crisis</h2>
+                    <p class="phase-description">
+                        El colapso es inevitable. El banco Baring Brothers, el principal prestamista, se declara insolvente. Argentina enfrenta moratoria de deuda. Pánico financiero global. Crisis económica profunda.
+                    </p>
+                    
+                    <div class="expandable-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="toggle-icon">▼</span>
+                            <span>Consecuencias</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="content-item">🌪️ Pánico bancario masivo</div>
+                            <div class="content-item">🌪️ Moratoria de deuda externa</div>
+                            <div class="content-item">🌪️ Quiebra de instituciones financieras</div>
+                            <div class="content-item">🌪️ Desempleo masivo</div>
+                            <div class="content-item">🌪️ Colapso de precios de activos</div>
+                            <div class="content-item">🌪️ Crisis política y social</div>
+                        </div>
+                    </div>
+
+                    <div class="expandable-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="toggle-icon">▼</span>
+                            <span>Actores Involucrados</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="content-item"><strong>Baring Brothers:</strong> Banco que colapsó</div>
+                            <div class="content-item"><strong>Gobierno Nacional:</strong> Enfrentando insolvencia</div>
+                            <div class="content-item"><strong>Trabajadores:</strong> Desempleados sin ingresos</div>
+                            <div class="content-item"><strong>Pequeños Ahorristas:</strong> Perdiendo sus ahorros</div>
+                            <div class="content-item"><strong>Acreedores Internacionales:</strong> Demandando pagos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 5 -->
+            <div class="phase">
+                <div class="phase-content">
+                    <div class="phase-marker">
+                        <span class="phase-number">5</span>
+                    </div>
+                    <span class="timeline-year">1890s - 1900s</span>
+                    <h2 class="phase-title">🏗️ Centralización Política y Fiscal</h2>
+                    <p class="phase-description">
+                        La nación absorbe todas las deudas provinciales. Se establece un sistema monetario nacional unificado. Se crea el Banco Central para controlar la emisión. Reformas estructurales profundas.
+                    </p>
+                    
+                    <div class="expandable-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="toggle-icon">▼</span>
+                            <span>Consecuencias</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="content-item">✅ Unificación monetaria nacional</div>
+                            <div class="content-item">✅ Control centralizado de emisión</div>
+                            <div class="content-item">✅ Fin de bancos garantizados provinciales</div>
+                            <div class="content-item">✅ Recuperación gradual de credibilidad</div>
+                            <div class="content-item">✅ Estabilización económica a largo plazo</div>
+                            <div class="content-item">✅ Reintegración al mercado financiero global</div>
+                        </div>
+                    </div>
+
+                    <div class="expandable-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="toggle-icon">▼</span>
+                            <span>Actores Involucrados</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="content-item"><strong>Gobierno Nacional:</strong> Implementando reformas</div>
+                            <div class="content-item"><strong>Banco Central (nuevo):</strong> Regulador central</div>
+                            <div class="content-item"><strong>Acreedores Internacionales:</strong> Renegociando deuda</div>
+                            <div class="content-item"><strong>Provincias:</strong> Perdiendo autonomía fiscal pero ganando estabilidad</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="scrollToTop()">↑ Ir al inicio</button>
+        <button onclick="toggleAllSections()">📖 Expandir todo</button>
+        <button onclick="scrollToBottom()">↓ Ir al final</button>
+    </div>
+
+    <footer>
+        <p>Visualización interactiva del colapso financiero argentino del siglo XIX</p>
+        <p>© 2025 - Análisis histórico-económico</p>
+    </footer>
+
+    <script>
+        function toggleSection(header) {
+            const icon = header.querySelector('.toggle-icon');
+            const content = header.nextElementSibling;
+            
+            icon.classList.toggle('active');
+            content.classList.toggle('active');
+        }
+
+        function toggleAllSections() {
+            const headers = document.querySelectorAll('.section-header');
+            headers.forEach(header => {
+                const icon = header.querySelector('.toggle-icon');
+                const content = header.nextElementSibling;
+                
+                if (!content.classList.contains('active')) {
+                    icon.classList.add('active');
+                    content.classList.add('active');
+                }
+            });
+        }
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        function scrollToBottom() {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        // Agregar efecto de movimiento mouse en desktop
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = (e.clientX / window.innerWidth) - 0.5;
+            const mouseY = (e.clientY / window.innerHeight) - 0.5;
+            
+            const depth = document.querySelector('header');
+            if (depth) {
+                depth.style.transform = `translate(${mouseX * 10}px, ${mouseY * 10}px)`;
+            }
+        });
+    </script>
+</body>
+</html>
